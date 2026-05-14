@@ -11,11 +11,15 @@ fila1 = Pin(13, Pin.OUT)
 fila2 = Pin(14, Pin.OUT)
 fila3 = Pin(15, Pin.OUT)
 
-boton = Pin(16, Pin.IN, Pin.PULL_UP)
+dipswitch1 = Pin(17, Pin.IN, Pin.PULL_DOWN)
+dipswitch2 = Pin(16, Pin.IN, Pin.PULL_DOWN)
+
+btn = Pin(28, Pin.IN, Pin.PULL_UP)
+buzzer = Pin(12, Pin.OUT)
 
 # ── WiFi ───────────────────────────────────────
-SSID     = "LIB-9997367"
-PASSWORD = "v4pbwpxuUjpa"
+SSID     = "Rasp"
+PASSWORD = "Abc12345"
 
 # ── Diccionario letra → (fila, columna) ────────
 LETRAS = {
@@ -137,11 +141,180 @@ def transmitir_palabra_dificil(frase, pausa=1000):
         time.sleep_ms(pausa)
     apagar_todo()
 
-      
+MORSE = {
+    'A': '.-',
+    'B': '-...',
+    'C': '-.-.',
+    'D': '-..',
+    'E': '.',
+    'F': '..-.',
+    'G': '--.',
+    'H': '....',
+    'I': '..',
+    'J': '.---',
+    'K': '-.-',
+    'L': '.-..',
+    'M': '--',
+    'N': '-.',
+    'O': '---',
+    'P': '.--.',
+    'Q': '--.-',
+    'R': '.-.',
+    'S': '...',
+    'T': '-',
+    'U': '..-',
+    'V': '...-',
+    'W': '.--',
+    'X': '-..-',
+    'Y': '-.--',
+    'Z': '--..',
+
+    '0': '-----',
+    '1': '.----',
+    '2': '..---',
+    '3': '...--',
+    '4': '....-',
+    '5': '.....',
+    '6': '-....',
+    '7': '--...',
+    '8': '---..',
+    '9': '----.',
+
+    '+': '.-.-.',
+    '-': '-....-'
+}
+
+def sonar_palabra(frase, duracion1):
+    for letra in frase:
+        letra = letra.upper()
+        if letra not in MORSE:
+            return
+
+        codigo = MORSE[letra]
+
+        for simbolo in codigo:
+
+            if simbolo == '.':
+
+                buzzer.on()
+                time.sleep(0.2)
+                buzzer.off()
+
+            elif simbolo == '-':
+
+                buzzer.on()
+                time.sleep(0.6)
+                buzzer.off()
+
+            # pausa entre símbolos
+            time.sleep(0.2)
+            
+        # pausa entre letras
+        time.sleep(duracion1)
+        
+morse_reves = {
+    '.-': 'A',
+    '-...': 'B',
+    '-.-.': 'C',
+    '-..': 'D',
+    '.': 'E',
+    '..-.': 'F',
+    '--.': 'G',
+    '....': 'H',
+    '..': 'I',
+    '.---': 'J',
+    '-.-': 'K',
+    '.-..': 'L',
+    '--': 'M',
+    '-.': 'N',
+    '---': 'O',
+    '.--.': 'P',
+    '--.-': 'Q',
+    '.-.': 'R',
+    '...': 'S',
+    '-': 'T',
+    '..-': 'U',
+    '...-': 'V',
+    '.--': 'W',
+    '-..-': 'X',
+    '-.--': 'Y',
+    '--..': 'Z',
+
+    '-----': '0',
+    '.----': '1',
+    '..---': '2',
+    '...--': '3',
+    '....-': '4',
+    '.....': '5',
+    '-....': '6',
+    '--...': '7',
+    '---..': '8',
+    '----.': '9',
+
+    '.-.-.': '+',
+    '-....-': '-'
+}
+
+presionado = False
+tiempo_inicio = 0
+tiempo_solto = 0
+letra_morse = ""
+palabra = []
+
+def boton(conn):
+    global tiempo_inicio, tiempo_solto, presionado, letra_morse, palabra
+
+
+    valor = btn.value()
+
+    if valor == 0 and not presionado:
+        tiempo_inicio = time.ticks_ms()
+        presionado = True
+
+    # Botón soltado
+    if valor == 1 and presionado:
+        duracion = time.ticks_diff(time.ticks_ms(), tiempo_inicio)
+
+        presionado = False
+        tiempo_solto = time.ticks_ms()
+
+        if duracion < 1000:
+            letra_morse += "."
+        else:
+            letra_morse += "-"
+
+        print("Morse:", letra_morse)
+
+    # Detectar pausa entre letras
+    if not presionado and tiempo_solto > 0:
+        pausa = time.ticks_diff(time.ticks_ms(), tiempo_solto)
+
+        if pausa > 3000 and pausa < 6000 and letra_morse:
+            letra = morse_reves.get(letra_morse, '?')
+
+            print("Letra:", letra)
+
+            palabra.append(letra)
+            print("Palabra:", "".join(palabra))
+            letra_morse = ""
+            
+        if pausa > 10000:
+            if palabra:
+                palabra_completa = "".join(palabra)
+                conn.send(palabra_completa.encode())
+                palabra.clear()
+                tiempo_solto = 0
+                letra_morse =""
+            letra_morse =""
+            tiempo_solto = 0
+            return True
+        return False
+
 # ── WiFi ───────────────────────────────────────
 def connect_wifi():
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
+    wlan.ifconfig(('192.168.137.161', '255.255.255.0', '192.168.0.1', '8.8.8.8'))
     wlan.connect(SSID, PASSWORD)
     print("Conectando...", end="")
     start = time.time()
@@ -171,22 +344,41 @@ def start_server(ip):
                 break
             msg = data.decode().strip().upper()
             print("Recibido:", msg)
-            
             partes = msg.split(",")
 
             dificultad = partes[0]
-            palabra = partes[1]
-            
-            conn.send("Transmitiendo: {}".format(msg).encode())
-            
-            if dificultad == "FACIL":
-                transmitir_palabra_facil(palabra)
-            elif dificultad == "MEDIA":
-                transmitir_palabra_medio(palabra)
-            elif dificultad == "DIFICIL":
-                transmitir_palabra_dificil(palabra)
+            palabra_recibida = partes[1]
+                
+            if dificultad == "VS":
+                if dipswitch1.value() == 1:
+                    transmitir_palabra_medio(palabra_recibida)
                     
-            conn.send("OK".encode())
+                elif dipswitch2.value() == 1:
+                    sonar_palabra(palabra_recibida, 1.5)
+                    
+                while True:
+                    terminado = boton(conn)
+                    if terminado:
+                        break
+                    time.sleep_ms(20)
+                
+            else:
+                conn.send("Transmitiendo: {}".format(msg).encode())
+                if dipswitch1.value() == 1:
+                    if dificultad == "FACIL":
+                        transmitir_palabra_facil(palabra_recibida)
+                    elif dificultad == "MEDIA":
+                        transmitir_palabra_medio(palabra_recibida)
+                    elif dificultad == "DIFICIL":
+                        transmitir_palabra_dificil(palabra_recibida)
+                elif dipswitch2.value() == 1:
+                    if dificultad == "FACIL":
+                        sonar_palabra(palabra_recibida, 2)
+                    elif dificultad == "MEDIA":
+                        sonar_palabra(palabra_recibida, 1.5)
+                    elif dificultad == "DIFICIL":
+                        sonar_palabra(palabra_recibida, 1)
+
     except KeyboardInterrupt:
         print("Detenido")
     except Exception as e:
