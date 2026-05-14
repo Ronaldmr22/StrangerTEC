@@ -111,6 +111,7 @@ def encender_letra(letra):
     elif fila == 3:
         fila3.value(1)
 
+
 def transmitir_palabra_facil(frase, pausa=3000):
     for letra in frase:
         if letra == ' ':
@@ -140,6 +141,7 @@ def transmitir_palabra_dificil(frase, pausa=1000):
         encender_letra(letra)
         time.sleep_ms(pausa)
     apagar_todo()
+
 
 MORSE = {
     'A': '.-',
@@ -183,6 +185,12 @@ MORSE = {
     '+': '.-.-.',
     '-': '-....-'
 }
+
+"""
+Función de sonar morse
+https://youtu.be/kiXElkDxdhg
+https://www.instructables.com/Raspberry-Pi-Tutorial-How-to-Use-a-Buzzer/
+"""
 
 def sonar_palabra(frase, duracion1):
     for letra in frase:
@@ -261,22 +269,28 @@ tiempo_solto = 0
 letra_morse = ""
 palabra = []
 
+
+"""
+Función para utilizar el botón y que detecte los tiempos correctos
+La utilidad de time.ticks_ms fue esencial y fue extraída de: https://docs.micropython.org/en/latest/library/time.html
+y https://www.fredscave.com/pyboard/22-time-delay-and-timimg.html
+"""
 def boton(conn):
     global tiempo_inicio, tiempo_solto, presionado, letra_morse, palabra
-
 
     valor = btn.value()
 
     if valor == 0 and not presionado:
         tiempo_inicio = time.ticks_ms()
         presionado = True
+        buzzer.on()     
 
-    # Botón soltado
     if valor == 1 and presionado:
         duracion = time.ticks_diff(time.ticks_ms(), tiempo_inicio)
 
         presionado = False
         tiempo_solto = time.ticks_ms()
+        buzzer.off()    
 
         if duracion < 1000:
             letra_morse += "."
@@ -285,7 +299,6 @@ def boton(conn):
 
         print("Morse:", letra_morse)
 
-    # Detectar pausa entre letras
     if not presionado and tiempo_solto > 0:
         pausa = time.ticks_diff(time.ticks_ms(), tiempo_solto)
 
@@ -310,7 +323,9 @@ def boton(conn):
             return True
         return False
 
-# ── WiFi ───────────────────────────────────────
+"""
+Conexión por Wifi, del taller de uso de la Raspberry
+"""
 def connect_wifi():
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)

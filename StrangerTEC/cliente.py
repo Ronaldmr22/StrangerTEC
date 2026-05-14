@@ -36,17 +36,22 @@ C_principal.place(x=0, y=0)
 imagen_carga     = Image.open("imagenes/fondo1.png").resize((ancho, alto))
 imagenprin_fondo = ImageTk.PhotoImage(imagen_carga)
 C_principal.create_image(0, 0, image=imagenprin_fondo, anchor="nw")
- 
+
+"""
+Función que carga imágenes, sacada de taller de tkinter de intro a la progra
+"""
 def cargar_imagen(nombre, anch, alt):
     ruta = path.join('imagenes/', nombre)
     img  = Image.open(ruta).resize((anch, alt))
     return ImageTk.PhotoImage(img)
  
  
-# ── Estilo de botones compartido ───────────────────────────────────────────────
+"""
+Estilo para botones
+"""
 estilo_btn = dict(font=("Stranger Things", 20, "bold"),bg="#2d0e5e", fg="#b89ff8",activebackground="#4a2080",activeforeground="#ffffff",relief="flat",cursor="hand2")
 
-# ── Función que abre la ventana de juego individual ───────────────────────────
+
 def ventana_solo():
     global palabra_jugador
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -67,27 +72,19 @@ def ventana_solo():
     # --- Widgets ---
     nombre_jugador_lbl=Label(ven_solo,text="Nombre del jugador",font=("Stranger Things",20))
     nombre_jugador_lbl.place(x=400,y=50)
-    nombre_jugador_entry = Entry(ven_solo, width=30,
-        font=("Stranger Things", 20),
-        bg="#41295F", fg="#e8d5ff",
-        relief="flat", bd=2)
+    nombre_jugador_entry = Entry(ven_solo, width=30,font=("Stranger Things", 20),bg="#41295F", fg="#e8d5ff",relief="flat", bd=2)
     nombre_jugador_entry.place(x=680,y=50)
 
     palabra_lbl=Label(ven_solo,text="Palabra secreta",font=("Stranger Things",20))
     palabra_lbl.place(x=400,y=120)
 
-    palabra_jgdr = Entry(ven_solo, width=30,
-        font=("Stranger Things", 20),
-        bg="#41295F", fg="#e8d5ff",
-        relief="flat", bd=2)
+    palabra_jgdr = Entry(ven_solo, width=30,font=("Stranger Things", 20),bg="#41295F", fg="#e8d5ff",relief="flat", bd=2)
     palabra_jgdr.place(x=680,y=120)
  
-    status_label = Label(ven_solo, text="Desconectado",
-        font=("Stranger Things", 10),
-        bg="#41295F", fg="#b89ff8")
+    status_label = Label(ven_solo, text="Desconectado",font=("Stranger Things", 10),bg="#41295F", fg="#b89ff8")
     status_label.pack(pady=2)
  
-    # --- Funciones internas ---
+    """Función de recibir mensajes, extraída de taller de la Raspberry"""
     def receive_messages():
         while True:
             try:
@@ -97,6 +94,7 @@ def ventana_solo():
             except:
                 break
  
+    """Funciones de enviar mensajes, inspiradas del taller de la Raspberry"""
     def send_message_facil():
         global palabra
         palabra = random.choice(Palabras)
@@ -137,6 +135,9 @@ def ventana_solo():
             pass
         ven_solo.destroy()
  
+    """
+    Función de deshabilitar botones de dificultades
+    """
     def deshabilitar_facil():
         btn_f.config(state='disabled')
  
@@ -157,46 +158,41 @@ def ventana_solo():
         puntaje_txt.config(text="0")
         nombre_jugador_entry.delete(0, END)
  
+    """
+    Función que hace aparecer la pantalla de rankings
+    """
     def puntajes_ranking():
-        if (btn_d.cget('state') == 'disabled' and
-            btn_m.cget('state') == 'disabled' and
-            btn_f.cget('state') == 'disabled'):
-            palabra_jgdr.config(state='disabled')
-            btn_enviar.config(state='disabled')
+        if (btn_d.cget('state') == 'disabled' and btn_m.cget('state') == 'disabled' and btn_f.cget('state') == 'disabled'): 
+            palabra_jgdr.config(state='disabled') 
+            btn_enviar.config(state='disabled') 
             rankines(habilitar)
  
     # --- Botones ---
-    btn_f = Button(ven_solo, text="FÁCIL",
-        **estilo_btn,
-        command=lambda: [send_message_facil(), deshabilitar_facil()])
+    btn_f = Button(ven_solo, text="FÁCIL",**estilo_btn,command=lambda: [send_message_facil(), deshabilitar_facil()])
     btn_f.place(x=600,y=300)
  
-    btn_m = Button(ven_solo, text="MEDIA",
-        **estilo_btn,
-        command=lambda: [send_message_medio(), deshabilitar_medio()])
+    btn_m = Button(ven_solo, text="MEDIA",**estilo_btn,command=lambda: [send_message_medio(), deshabilitar_medio()])
     btn_m.place(x=600,y=400)
  
-    btn_d = Button(ven_solo, text="DIFÍCIL",
-        **estilo_btn,
-        command=lambda: [send_message_dificil(), deshabilitar_dificil()])
+    btn_d = Button(ven_solo, text="DIFÍCIL",**estilo_btn,command=lambda: [send_message_dificil(), deshabilitar_dificil()])
     btn_d.place(x=600,y=500)
  
     Button(ven_solo, text="SALIR", **estilo_btn, command=salir).place(x=600,y=600)
 
-    btn_enviar = Button(ven_solo, text="ENVIAR",
-        **estilo_btn,
-        command=lambda: [puntaje(palabra, palabra_jgdr.get()), puntajes_ranking()])
+    btn_enviar = Button(ven_solo, text="ENVIAR",**estilo_btn,command=lambda: [puntaje(palabra, palabra_jgdr.get()), puntajes_ranking()])
     btn_enviar.place(x=1070,y=110)
  
     connect()
  
-    puntaje_txt = Label(ven_solo, text="0",
-        font=("Stranger Things", 20, "bold"),
-        bg="#41295F", fg="#e8d5ff")
+    puntaje_txt = Label(ven_solo, text="0",font=("Stranger Things", 20, "bold"),bg="#41295F", fg="#e8d5ff")
     puntaje_txt.place(x=680,y=190)
     
     puntaje_lbl= Label(ven_solo, text="Puntaje",font=("Stranger Things",20),bg="#FFFFFF", fg="#000000",relief="flat", bd=2)
     puntaje_lbl.place(x=400,y=190)
+
+    """
+    Función recursiva que ayuda a calcular cuantas letras tuvo buenas
+    """
  
     def puntaje_aux(lista1, lista2):
         if lista1 == []:
@@ -217,7 +213,7 @@ def ventana_solo():
         puntaje_txt.config(text=puntaje_jugador1)
         palabra_jgdr.delete(0, END)
  
- 
+
 def rankines(habilitar):
     global nombre_jugador
     ven_ultima = Toplevel()
@@ -230,6 +226,9 @@ def rankines(habilitar):
     C_final.create_image(0, 0, image=imagenvictoria_fondo, anchor="nw")
     C_final.imagenfondo = imagenvictoria_fondo
  
+    """
+    Lee y escribe sobre el txt
+    """
     with open("rank_stranger.txt", "a", encoding="utf-8") as rank:
         rank.write(f"{puntaje_jugador1},{nombre_jugador}\n")
  
@@ -245,23 +244,11 @@ def rankines(habilitar):
  
     estilo = ttk.Style()
     estilo.theme_use("clam")
-    estilo.configure("Treeview",
-        background="#1a0a2e", foreground="#e8d5ff",
-        fieldbackground="#1a0a2e", rowheight=30,
-        font=("Stranger Things", 11)
-    )
-    estilo.configure("Treeview.Heading",
-        background="#2d0e5e", foreground="#b89ff8",
-        font=("Stranger Things", 11, "bold"), relief="flat"
-    )
-    estilo.map("Treeview",
-        background=[("selected", "#4a2080")],
-        foreground=[("selected", "#ffffff")]
-    )
+    estilo.configure("Treeview",background="#1a0a2e", foreground="#e8d5ff",fieldbackground="#1a0a2e", rowheight=30,font=("Stranger Things", 11))
+    estilo.configure("Treeview.Heading",background="#2d0e5e", foreground="#b89ff8",font=("Stranger Things", 11, "bold"), relief="flat")
+    estilo.map("Treeview",background=[("selected", "#4a2080")],foreground=[("selected", "#ffffff")])
  
-    Label(ven_ultima, text="RANKING",
-        font=("Stranger Things", 28, "bold"),
-        bg="#1a0a2e", fg="#b89ff8").place(x=500, y=240)
+    Label(ven_ultima, text="RANKING",font=("Stranger Things", 28, "bold"),bg="#1a0a2e", fg="#b89ff8").place(x=500, y=240)
  
     tree_ranking = ttk.Treeview(ven_ultima, columns=("nombre", "puntaje"), show="headings", height=10)
     tree_ranking.column("nombre", width=200, anchor="center")
@@ -281,20 +268,18 @@ def rankines(habilitar):
         habilitar()
         ven_ultima.destroy()
  
-    Button(ven_ultima, text="SALIR",
-        font=("Stranger Things", 12, "bold"),
-        bg="#2d0e5e", fg="#b89ff8",
-        activebackground="#4a2080", activeforeground="#ffffff",
-        relief="flat", padx=20, pady=8,
-        command=cerrar).place(x=570, y=580)
+    Button(ven_ultima, text="SALIR",font=("Stranger Things", 12, "bold"),bg="#2d0e5e", fg="#b89ff8",activebackground="#4a2080", activeforeground="#ffffff",relief="flat", padx=20, pady=8,command=cerrar).place(x=570, y=580)
  
  
 # ── Botones de la ventana principal ───────────────────────────────────────────
-btn_juego_normal = Button(C_principal, text="JUGAR SOLO",
-    **estilo_btn, command=ventana_solo)
+btn_juego_normal = Button(C_principal, text="JUGAR SOLO",**estilo_btn, command=ventana_solo)
 btn_juego_normal.place(x=470,y=350)
 
 
+
+"""
+Ventana Versus
+"""
 def versus():
     global puntaje_jugador1
     global puntaje_jugador2
@@ -329,7 +314,7 @@ def versus():
     puntaje1_lbl = Label(ven_versus,text="Puntaje - Jugador 1",font=("Stranger Things", 22, "bold"),bg="#1a0a2e",fg="#e8d5ff")
     puntaje1_lbl.place(x=50,y=100)
     puntaje1_txt = Label(ven_versus,text="0",font=("Stranger Things", 22, "bold"),bg="#1a0a2e",fg="#e8d5ff")
-    puntaje1_txt.place(x=420,y=250)
+    puntaje1_txt.place(x=420,y=100)
 
     nombre_jugador2_lbl= Label(ven_versus,text="Jugador 2",font=("Stranger Things", 25),bg="#1a0a2e",fg="#e8d5ff",relief="flat",bd=2)
     nombre_jugador2_lbl.place(x=600, y=50)
@@ -339,7 +324,7 @@ def versus():
     puntaje2_lbl = Label(ven_versus,text="Puntaje - Jugador 2",font=("Stranger Things", 22, "bold"),bg="#1a0a2e",fg="#e8d5ff")
     puntaje2_lbl.place(x=600,y=100)
     puntaje2_txt = Label(ven_versus,text="0",font=("Stranger Things", 22, "bold"),bg="#1a0a2e",fg="#e8d5ff")
-    puntaje2_txt.place(x=1000,y=250)
+    puntaje2_txt.place(x=1000,y=100)
 
     status_label = Label(ven_versus,text="Desconectado",font=("Stranger Things", 10),bg="#1a0a2e",fg="#e8d5ff")
     status_label.pack(pady=2)
@@ -350,11 +335,10 @@ def versus():
     turno_label = Label(ven_versus,text="Turno Jugador 1 (Boton)",font=("Stranger Things", 26),bg="#1a0a2e",fg="white")
     turno_label.place(x=545,y=300)
 
-    # ─────────────────────────────────────
-    # RECEIVE: alterna según ronda
-    # Ronda 1 → botón = J1, Morse = J2
-    # Ronda 2 → botón = J2, Morse = J1
-    # ─────────────────────────────────────
+
+    """
+    Función que recive los mensajes de la Raspberry
+    """
     def receive_messages():
         nonlocal respuesta_j1
         nonlocal respuesta_j2
@@ -394,9 +378,7 @@ def versus():
         except Exception as e:
             status_label.config(text=f"Error: {e}")
 
-    # ─────────────────────────────────────
-    # RONDAS
-    # ─────────────────────────────────────
+
 
     def iniciar_ronda():
         nonlocal palabra_actual
@@ -409,6 +391,9 @@ def versus():
         letra_morse = ""
         letras_morse.clear()
 
+        """
+        Código sacado de la fuente: https://www.w3schools.com/python/ref_random_choice.asp
+        """
         palabra_actual = random.choice(Palabras)
         print("Palabra:", palabra_actual)
         client_socket.send(f"VS,{palabra_actual}".encode())
@@ -427,10 +412,6 @@ def versus():
         turno_label.config(text="Turno Jugador 2 (Boton)")
         iniciar_ronda()
 
-    # ─────────────────────────────────────
-    # PUNTAJES
-    # ─────────────────────────────────────
-
     def puntaje_aux(lista1, lista2):
         if lista1 == []:
             return 0
@@ -447,6 +428,9 @@ def versus():
         global puntaje_jugador1
         puntos = puntaje_aux(list(palabra_actual), list(respuesta_j1))
         puntaje_jugador1 += puntos
+        """
+        Código de cambiar label sacado de : https://medium.com/@pawansakhare/how-to-change-the-content-of-label-in-tkinter-272eba85b6cc
+        """
         ven_versus.after(0, lambda: puntaje1_txt.config(text=str(puntaje_jugador1)))
 
     def calcular_puntos_j2():
@@ -455,9 +439,11 @@ def versus():
         puntaje_jugador2 += puntos
         ven_versus.after(0, lambda: puntaje2_txt.config(text=str(puntaje_jugador2)))
 
-    # ─────────────────────────────────────
-    # GANADOR
-    # ─────────────────────────────────────
+
+
+    """
+    Función que muestra el ganador
+    """
 
     def mostrar_ganador():
         jugador1 = nombre_jugador1_entry.get()
@@ -486,21 +472,18 @@ def versus():
         jugador1_lbl=Label(ven_ganador,text=jugador1, font=("Stranger Things",25),bg="#1a0a2e",fg="#e8d5ff")
         jugador1_lbl.place(x=100,y=100)
         puntaje1_lbl=Label(ven_ganador,text=puntaje1,font=("Stranger Things",30),bg="#1a0a2e",fg="#e8d5ff")
-        puntaje1_lbl.place(x=150,y=100)
+        puntaje1_lbl.place(x=150,y=200)
 
         jugador2_lbl=Label(ven_ganador,text=jugador2, font=("Stranger Things",25),bg="#1a0a2e",fg="#e8d5ff")
         jugador2_lbl.place(x=600,y=100)
         puntaje2_lbl=Label(ven_ganador,text=puntaje2,font=("Stranger Things",30),bg="#1a0a2e",fg="#e8d5ff")
-        puntaje2_lbl.place(x=650,y=100)
+        puntaje2_lbl.place(x=650,y=200)
 
         ganador_lbl_aux=Label(ven_ganador,text="El ganador es", font=("Stranger Things",20),bg="#1a0a2e",fg="#e8d5ff")
         ganador_lbl_aux.place(x=600,y=450)
         ganador_lbl=Label(ven_ganador,text=ganador, font=("Stranger Things",30),bg="#1a0a2e",fg="#e8d5ff")
         ganador_lbl.place(x=550,y=550)
 
-    # ─────────────────────────────────────
-    # SALIR
-    # ─────────────────────────────────────
 
     def salir():
         try:
@@ -509,15 +492,16 @@ def versus():
             pass
         ven_versus.destroy()
 
-    # ─────────────────────────────────────
-    # MORSE TECLADO
-    # ─────────────────────────────────────
-
+    """
+    Morse con el teclado
+    """
+    """
+    https://youtu.be/mL6xX__3yj4
+    """
     tiempo_inicio = 0
     tiempo_solto = 0
     letra_morse = ""
     letras_morse = []
-
     morse_reves = {
         '.-': 'A',
         '-...': 'B',
@@ -547,6 +531,11 @@ def versus():
         '--..': 'Z'
     }
 
+    """
+    Código a cerca de eventos con el teclado viso en youtube:
+    https://www.youtube.com/watch?v=McCg6i0fZSg&pp=ygUeZXZlbnRvcyBjb24gZWwgdGVjbGFkbyB0a2ludGVy
+    https://www.youtube.com/watch?v=url8wUC7TEM&pp=ygUeZXZlbnRvcyBjb24gZWwgdGVjbGFkbyB0a2ludGVy
+    """
     def tecla_presion(event):
         nonlocal tiempo_inicio
         nonlocal turno
