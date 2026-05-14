@@ -20,7 +20,7 @@ nombre_jugador = ""
 nombre_jugador2 = ""
  
 Palabras = ["HOLA", "COMPUTADORA", "LED", "MONITOR", "TECLADO", "PROCESADOR", "SISTEMA", "MESSI", "MINECRAFT", "JUEGO"]
- 
+#Palabras = ["MECAGOENCHAVEZ"]
 # ── Ventana principal ──────────────────────────────────────────────────────────
 ventana_prin = Tk()
 ventana_prin.title("STRANGER THINGS")
@@ -74,8 +74,8 @@ def ventana_solo():
  
     # --- Widgets ---
     nombre_jugador_entry = Entry(ven_solo, width=30,
-        font=("Stranger Things", 13),
-        bg="#1a0a2e", fg="#b89ff8",
+        font=("Stranger Things", 15),
+        bg="#4C326B", fg="#b89ff8",
         insertbackground="#b89ff8",
         relief="flat", bd=2)
     nombre_jugador_entry.pack(pady=6)
@@ -295,124 +295,230 @@ btn_juego_normal = Button(C_principal, text="JUGAR SOLO",
 btn_juego_normal.place(x=ancho//2 - 100, y=alto//2)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 def versus():
+    global puntaje_jugador1
+    global puntaje_jugador2
+    puntaje_jugador1 = 0
+    puntaje_jugador2 = 0
     ven_versus = Toplevel()
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    
- 
-    ven_versus = Toplevel()
+
+    turno = 1
+    ronda = 1
+    rondas_maximas = 2
+    palabra_actual = ""
+    respuesta_j1 = ""
+    respuesta_j2 = ""
     ven_versus.title("Juego versus")
     ven_versus.state("zoomed")
     ven_versus.resizable(width=NO, height=NO)
- 
-    C_versus = Canvas(ven_versus, highlightthickness=0, width=ancho, height=alto, bg='black')
+
+    C_versus = Canvas(ven_versus,highlightthickness=0,width=ancho,height=alto,bg='black')
     C_versus.place(x=0, y=0)
- 
+
     imagen_carga_versus = Image.open("imagenes/fondovs.png").resize((ancho, alto))
     imagen_fondo_versus = ImageTk.PhotoImage(imagen_carga_versus)
-    C_versus.create_image(0, 0, image=imagen_fondo_versus, anchor="nw")
+
+    C_versus.create_image(0,0,image=imagen_fondo_versus,anchor="nw")
     C_versus.imagen = imagen_fondo_versus
- 
-    # --- Widgets ---
-    nombre_jugador_entry = Entry(ven_versus, width=30,font=("Stranger Things", 13),bg="#1a0a2e", fg="#b89ff8",insertbackground="#b89ff8",relief="flat", bd=2)
+
+    nombre_jugador_entry = Entry(ven_versus,width=30,font=("Stranger Things", 13),bg="#1a0a2e",fg="#b89ff8",insertbackground="#b89ff8",relief="flat",bd=2)
     nombre_jugador_entry.pack(padx=1)
-    puntaje_txt1 = Label(ven_versus, text="0",font=("Stranger Things", 20, "bold"),bg="#1a0a2e", fg="#e8d5ff")
+
+    puntaje_txt1 = Label(ven_versus,text="0",font=("Stranger Things", 20, "bold"),bg="#1a0a2e",fg="#e8d5ff")
     puntaje_txt1.pack(pady=4)
 
-
-    nombre_jugador2_entry = Entry(ven_versus, width=30,font=("Stranger Things", 13),bg="#1a0a2e", fg="#b89ff8",insertbackground="#b89ff8",relief="flat", bd=2)
+    nombre_jugador2_entry = Entry(ven_versus,width=30,font=("Stranger Things", 13),bg="#1a0a2e",fg="#b89ff8",insertbackground="#b89ff8",relief="flat",bd=2)
     nombre_jugador2_entry.pack(pady=6)
-    puntaje_txt2 = Label(ven_versus, text="0",font=("Stranger Things", 20, "bold"),bg="#1a0a2e", fg="#e8d5ff")
+
+    puntaje_txt2 = Label(ven_versus,text="0",font=("Stranger Things", 20, "bold"),bg="#1a0a2e",fg="#e8d5ff")
     puntaje_txt2.pack(pady=4)
- 
- 
-    status_label = Label(ven_versus, text="Desconectado",
-        font=("Stranger Things", 10),
-        bg="#1a0a2e", fg="#b89ff8")
+
+    status_label = Label(ven_versus,text="Desconectado",font=("Stranger Things", 10),bg="#1a0a2e",fg="#b89ff8")
     status_label.pack(pady=2)
- 
-    # --- Funciones internas ---
+
+    ronda_label = Label(ven_versus,text="RONDA 1",font=("Stranger Things", 15),bg="#1a0a2e",fg="white")
+    ronda_label.pack(pady=5)
+
+    turno_label = Label(ven_versus,text="Turno Jugador 1",font=("Stranger Things", 15),bg="#1a0a2e",fg="cyan")
+    turno_label.pack(pady=5)
+
+
     def receive_messages():
+        nonlocal respuesta_j1
+        nonlocal turno
+
         while True:
+
             try:
+
                 msg_boton = client_socket.recv(1024).decode()
+
                 if not msg_boton:
                     break
-                else:
-                    print(msg_boton)
+
+                respuesta_j1 = msg_boton.strip().upper()
+
+                print("Jugador 1:", respuesta_j1)
+
+                calcular_puntos_j1()
+
+                turno = 2
+
+                turno_label.config(text="Turno Jugador 2")
+
             except:
                 break
- 
-    def send_message_medio():
-        global palabra
-        palabra = random.choice(Palabras)
-        msg = f"VS,{palabra}"
-        if msg:
-            client_socket.send(msg.encode())
- 
 
     def connect():
+
         try:
             client_socket.connect((SERVER_IP, PORT))
-            threading.Thread(target=receive_messages, daemon=True).start()
-            status_label.config(text="Conectado al servidor")
+            threading.Thread(target=receive_messages,daemon=True).start()
+
+            status_label.config(
+                text="Conectado al servidor"
+            )
+
         except Exception as e:
-            status_label.config(text=f"Error: {e}")
 
+            status_label.config(
+                text=f"Error: {e}"
+            )
 
-    #https://youtu.be/lS347wuVsrA
+    # ─────────────────────────────────────
+    # RONDAS
+    # ─────────────────────────────────────
 
+    def iniciar_ronda():
+        nonlocal palabra_actual
+        palabra_actual = random.choice(Palabras)
+        print("Palabra:", palabra_actual)
+        client_socket.send(f"VS,{palabra_actual}".encode())
 
-    def mostrar_ganador():
-        if puntaje_jugador1 > puntaje_jugador2:
-            ganador = nombre_jugador
-        elif puntaje_jugador2 > puntaje_jugador1:
-            ganador = nombre_jugador2
-        else:
-            ganador = "Empate"
+    def siguiente_ronda():
 
+        nonlocal ronda
+        nonlocal turno
+
+        ronda += 1
+
+        if ronda > rondas_maximas:
+
+            mostrar_ganador()
+            return
+
+        turno = 1
+
+        ronda_label.config(
+            text=f"RONDA {ronda}"
+        )
+
+        turno_label.config(
+            text="Turno Jugador 1"
+        )
+
+        iniciar_ronda()
+
+    # ─────────────────────────────────────
+    # PUNTAJES
+    # ─────────────────────────────────────
 
     def puntaje_aux(lista1, lista2):
+
         if lista1 == []:
             return 0
+
         if lista2 == []:
             return 0
+
         elemento1 = lista1[0]
         elemento2 = lista2[0]
+
         if elemento1 == elemento2:
-            return 1 + puntaje_aux(lista1[1:], lista2[1:])
+
+            return 1 + puntaje_aux(
+                lista1[1:],
+                lista2[1:]
+            )
+
         else:
-            return puntaje_aux(lista1[1:], lista2[1:])
-    
-    def puntaje(palabra1, palabra2):
-        global puntaje_jugador1, nombre_jugador
-        nombre_jugador = nombre_jugador_entry.get()
-        puntaje_jugador1 += puntaje_aux(list(palabra1), list(palabra2))
-        puntaje_txt.config(text=puntaje_jugador1)
-        palabra_jgdr.delete(0, END)
-    
- 
+
+            return puntaje_aux(
+                lista1[1:],
+                lista2[1:]
+            )
+
+    def calcular_puntos_j1():
+
+        global puntaje_jugador1
+
+        puntos = puntaje_aux(
+            list(palabra_actual),
+            list(respuesta_j1)
+        )
+
+        puntaje_jugador1 += puntos
+
+        ven_versus.after(0, lambda: puntaje_txt1.config(text=str(puntaje_jugador1)))
+
+    def calcular_puntos_j2():
+
+        global puntaje_jugador2
+
+        puntos = puntaje_aux(
+            list(palabra_actual),
+            list(respuesta_j2)
+        )
+
+        puntaje_jugador2 += puntos
+
+        ven_versus.after(0,lambda: puntaje_txt2.config(text=str(puntaje_jugador2)))
+
+    # ─────────────────────────────────────
+    # GANADOR
+    # ─────────────────────────────────────
+
+    def mostrar_ganador():
+
+        if puntaje_jugador1 > puntaje_jugador2:
+
+            ganador = nombre_jugador_entry.get()
+
+        elif puntaje_jugador2 > puntaje_jugador1:
+
+            ganador = nombre_jugador2_entry.get()
+
+        else:
+
+            ganador = "EMPATE"
+
+        messagebox.showinfo(
+            "FIN DEL JUEGO",
+            f"Ganador: {ganador}"
+        )
+
+    # ─────────────────────────────────────
+    # SALIR
+    # ─────────────────────────────────────
+
     def salir():
+
+        try:
+            client_socket.close()
+        except:
+            pass
+
         ven_versus.destroy()
+
+    # ─────────────────────────────────────
+    # MORSE TECLADO
+    # ─────────────────────────────────────
 
     tiempo_inicio = 0
     tiempo_solto = 0
     letra_morse = ""
     palabra = []
-
 
     morse_reves = {
         '.-': 'A',
@@ -440,83 +546,149 @@ def versus():
         '.--': 'W',
         '-..-': 'X',
         '-.--': 'Y',
-        '--..': 'Z',
-
-        '-----': '0',
-        '.----': '1',
-        '..---': '2',
-        '...--': '3',
-        '....-': '4',
-        '.....': '5',
-        '-....': '6',
-        '--...': '7',
-        '---..': '8',
-        '----.': '9',
-
-        '.-.-.': '+',
-        '-....-': '-'
+        '--..': 'Z'
     }
 
     def tecla_presion(event):
-        global tiempo_inicio
+
+        nonlocal tiempo_inicio
+        nonlocal turno
+
+        if turno != 2:
+            return
+
         if tiempo_inicio == 0:
+
             tiempo_inicio = time.time()
 
     def tecla_no(event):
-        global tiempo_inicio, tiempo_solto, letra_morse
+
+        nonlocal tiempo_inicio
+        nonlocal tiempo_solto
+        nonlocal letra_morse
+        nonlocal turno
+
+        if turno != 2:
+            return
+
         if tiempo_inicio == 0:
             return
-        
+
         duracion = time.time() - tiempo_inicio
+
         tiempo_inicio = 0
         tiempo_solto = time.time()
 
         if duracion < 0.5:
+
             letra_morse += "."
+
         else:
+
             letra_morse += "-"
-        
+
         print("Morse:", letra_morse)
 
     def verificar_pausa():
-        nonlocal tiempo_solto, letra_morse, palabra
-        
+
+        nonlocal tiempo_solto
+        nonlocal letra_morse
+        nonlocal palabra
+        nonlocal respuesta_j2
+        nonlocal turno
+
         if tiempo_solto > 0:
+
             pausa = time.time() - tiempo_solto
 
+            # letra
+            if pausa > 3 and letra_morse:
+
+                letra = morse_reves.get(
+                    letra_morse,
+                    '?'
+                )
+
+                palabra.append(letra)
+
+                print("Letra:", letra)
+
+                letra_morse = ""
+
+            # palabra completa
             if pausa > 7:
-                if letra_morse:
-                    letra = morse_reves.get(letra_morse, '?')
-                    palabra.append(letra)
-                    letra_morse = ""
 
                 if palabra:
-                    print("Palabra final:", "".join(palabra))
+
+                    respuesta_j2 = "".join(
+                        palabra
+                    )
+
+                    print(
+                        "Jugador 2:",
+                        respuesta_j2
+                    )
+
+                    calcular_puntos_j2()
+
                     palabra.clear()
+
+                    turno = 1
+
+                    siguiente_ronda()
 
                 tiempo_solto = 0
 
-            elif  pausa > 3 and letra_morse:
-                letra = morse_reves.get(letra_morse, '?')
-                palabra.append(letra)
-                print("Letra:", letra)
-                print("Palabra:", "".join(palabra))
-                letra_morse = "" 
-        ven_versus.after(100, verificar_pausa)
+        ven_versus.after(
+            100,
+            verificar_pausa
+        )
 
-    ven_versus.bind("<KeyPress-space>", tecla_presion)
-    ven_versus.bind("<KeyRelease-space>", tecla_no)
-    verificar_pausa()
+    # ─────────────────────────────────────
+    # BINDS
+    # ─────────────────────────────────────
+
+    ven_versus.bind(
+        "<KeyPress-space>",
+        tecla_presion
+    )
+
+    ven_versus.bind(
+        "<KeyRelease-space>",
+        tecla_no
+    )
+
+    # ─────────────────────────────────────
+    # BOTONES
+    # ─────────────────────────────────────
+
+    btn_inicio = Button(
+        C_versus,
+        text="INICIAR",
+        **estilo_btn,
+        command=iniciar_ronda
+    )
+
+    btn_inicio.place(
+        x=200,
+        y=alto//2
+    )
+
+    btn_salir = Button(
+        C_versus,
+        text="SALIR",
+        **estilo_btn,
+        command=salir
+    )
+
+    btn_salir.place(
+        x=500,
+        y=alto//2
+    )
 
     connect()
-
-    btn_ronda1 = Button(C_versus, text="RONDA 1", **estilo_btn, command=send_message_medio)
-    btn_ronda1.place(x=200 + 20, y=alto//2)
-    btn_ronda2 = Button(C_versus, text="RONDA2", **estilo_btn, command=send_message_medio)
-    btn_ronda2.place(x=500 + 20, y=alto//2)
+    verificar_pausa()
     
-
-
  
 btn_juego_vs = Button(C_principal, text="JUGAR VS", **estilo_btn, command=versus)
 btn_juego_vs.place(x=ancho//2 + 20, y=alto//2)
